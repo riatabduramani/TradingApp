@@ -1,5 +1,6 @@
 package com.db.trading.api;
 
+import com.db.library.algolib.SignalHandler;
 import com.db.trading.signal.SignalProcessor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class SignalController {
 
-    private final SignalProcessor signalProcessor;
+    private final SignalHandler signalHandler;
 
     @GetMapping("/{signalParam}")
     @ResponseStatus(HttpStatus.OK)
     public void getSignalByParam(@PathVariable Integer signalParam) {
         log.info("Requesting data for signal: {}", signalParam);
-        signalProcessor.handleSignal(signalParam);
+        signalHandler.handleSignal(signalParam);
     }
 }
