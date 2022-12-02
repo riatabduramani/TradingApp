@@ -2,9 +2,10 @@ package com.db.trading.signal;
 
 import com.db.library.algolib.SignalHandler;
 import com.db.trading.TradeAlgo;
-import com.db.trading.dto.Signal;
+import com.db.trading.entity.TradeSignal;
 import com.db.trading.enums.TradeType;
 import com.db.trading.exception.TradeAppException;
+import com.db.trading.service.TradeSignalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,22 +17,24 @@ import java.util.Objects;
 @Service
 public class SignalHandlerImpl implements SignalHandler {
 
-    private final SignalProcessor signalProcessor;
+    private final TradeSignalService signalService;
     private final TradeAlgo tradeAlgo;
 
     @Override
     public void handleSignal(int signal) {
-        signalProcessor.payload()
-                .stream()
-                .filter(s -> Objects.nonNull(s.getSignal()) && s.getSignal() == signal)
-                .filter(s -> Objects.nonNull(s.getParams()) && !s.getParams().isEmpty())
-                .findFirst()
-                .ifPresent(this::runTradeAlgoLib);
+        TradeSignal tradeSignal = signalService.getTradeSignal(signal);
+
+        if (Objects.isNull(tradeSignal)) {
+            tradeAlgo.cancelTrades();
+            throw new TradeAppException("Trading signal couldn't found: " + signal);
+        }
+
+        runTradeAlgoLib(tradeSignal);
     }
 
-    private void runTradeAlgoLib(Signal tradeSignal) {
+    private void runTradeAlgoLib(TradeSignal tradeSignal) {
 
-        log.info("Running Signal#: {}", tradeSignal.getSignal());
+        log.info("Processing Trading Signal #: {}", tradeSignal.getSignal());
 
         if (Objects.isNull(tradeSignal.getType())) {
             tradeAlgo.cancelTrades();
@@ -40,7 +43,13 @@ public class SignalHandlerImpl implements SignalHandler {
 
         processingType(tradeSignal.getType());
 
-        tradeSignal.getParams().forEach(paramList -> tradeAlgo.setAlgoParam(paramList.getParam(), paramList.getValue()));
+        if (tradeSignal.getSpecifications().isEmpty()) {
+            tradeAlgo.cancelTrades();
+            throw new TradeAppException("Trading signal params are missing");
+        }
+
+        tradeSignal.getSpecifications()
+                .forEach(specification -> tradeAlgo.setAlgoParam(specification.getParam(), specification.getValue()));
 
         if (tradeSignal.getCalculate().equals(true)) {
             tradeAlgo.performCalc();
@@ -49,7 +58,7 @@ public class SignalHandlerImpl implements SignalHandler {
         tradeAlgo.submitToMarket();
         tradeAlgo.doAlgo();
 
-        log.info("End of Signal#: {}", tradeSignal.getSignal());
+        log.info("End processing of Trading Signal #: {}", tradeSignal.getSignal());
     }
 
     private void processingType(TradeType type) {
