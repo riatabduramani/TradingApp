@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @AllArgsConstructor
 @RestController
 @RequestMapping
@@ -21,7 +23,7 @@ public class CreateTradeSignalController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.OK)
-    public void handle(@RequestBody TradeSignalRequest request) {
+    public void handle(@Valid @RequestBody TradeSignalRequest request) {
         log.info("Incoming request: {}", request);
         signalService.saveTradeSignal(request);
     }
