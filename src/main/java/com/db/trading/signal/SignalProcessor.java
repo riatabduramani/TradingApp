@@ -1,42 +1,34 @@
 package com.db.trading.signal;
 
-import com.db.library.algolib.Algo;
-import com.db.library.algolib.SignalHandler;
+import com.db.trading.dto.Signal;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class SignalProcessor implements SignalHandler {
+public class SignalProcessor {
 
-    @Override
-    public void handleSignal(int signal) {
-        log.info("Handle Signal: {}", signal);
+    private final Gson gson;
 
-        Algo algo = new Algo();
-        switch (signal) {
-            case 1 -> {
-                algo.setUp();
-                algo.setAlgoParam(1, 60);
-                algo.performCalc();
-                algo.submitToMarket();
-            }
-            case 2 -> {
-                algo.reverse();
-                algo.setAlgoParam(1, 80);
-                algo.submitToMarket();
-            }
-            case 3 -> {
-                algo.setAlgoParam(1, 90);
-                algo.setAlgoParam(2, 15);
-                algo.performCalc();
-                algo.submitToMarket();
-            }
-            default -> algo.cancelTrades();
+    public List<Signal> payload() {
+        try {
+            File file = ResourceUtils.getFile("classpath:signalList.json");
+            Type foundListType = new TypeToken<ArrayList<Signal>>(){}.getType();
+            return gson.fromJson(new FileReader(file), foundListType);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("File not found: " + e.getMessage());
         }
-
-        algo.doAlgo();
     }
 }
