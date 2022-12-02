@@ -2,7 +2,8 @@ package com.db.trading.enums;
 
 public enum TradeType {
     SETUP("setup"),
-    REVERSE("reverse");
+    REVERSE("reverse"),
+    NONE("none");
 
     public final String value;
 

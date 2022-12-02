@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -14,18 +15,19 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Signal {
+@ToString
+public class TradeSignalRequest {
     private Integer signal;
     private TradeType type;
     private Boolean calculate;
-    private List<ParamList> params;
+    private List<Specification> specifications;
 
     @Getter
     @Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ParamList {
+    public static class Specification {
         private int param;
         private int value;
     }
